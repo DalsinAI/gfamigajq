@@ -1,0 +1,12 @@
+--- a/src/builtin.c
++++ b/src/builtin.c
+@@ -1108,6 +1108,9 @@
+   jv_free(regex);
+   return result;
+ }
++#elif defined(HAVE_GFOPENREGEX)
++/* GFOpenRegex (regex.library) on AmigaOS: gfamigajq amiga/jq_gfregex.inc */
++#include "jq_gfregex.inc"
+ #else /* !HAVE_LIBONIG */
+ static jv f_match(jq_state *jq, jv input, jv regex, jv modifiers, jv testmode) {
+   jv_free(input);

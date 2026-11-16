@@ -1,0 +1,10 @@
+# onig.test cases left out on GFOpenRegex, each with why. Both are
+# regex.library gaps, asked for in gfopenregex; take the line out here
+# when the pinned GFOpenRegex has the fix.
+#
+# A combining mark (U+0304) isn't a word character to regex.library, so
+# \b falls between "a" and its macron (Oniguruma: \w takes marks, Mn/Mc).
+[match(".+?\\b")]
+# With REG_STARTEND, \b at rm_so doesn't look at the character before it,
+# so a global search's later matches see a word start everywhere.
+gsub("\\b(?<x>.)"; "\(.x|ascii_downcase)")
