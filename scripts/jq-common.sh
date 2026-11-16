@@ -50,6 +50,7 @@ jq_generate() {
 # ($PROBE_CC: the compile and link command).
 # $1 is jq's tree (its configure.ac lists the maths functions).
 # PROBE_BIGENDIAN=1: the 68k (jv_dtoa's IEEE_MC68k), else IEEE_8087.
+# PROBE_GFOS=1: environ is amiga/amiga_env.c's (gfjq_environ) in every file.
 jq_probe() {
     t=$(mktemp -d)
     {
@@ -62,6 +63,16 @@ jq_probe() {
         echo "#define HAVE_PTHREAD_KEY_CREATE 1"
         echo "#define HAVE_PTHREAD_ONCE 1"
         echo "#define HAVE_ATEXIT 1"
+        if [ "${PROBE_GFOS:-}" = 1 ]; then
+            # GFOS: every file's environ is amiga/amiga_env.c's list (Shell
+            # locals and ENV: globals). libnix's headers name another list
+            # environ (locals only), so theirs is taken first and replaced.
+            echo "#include <stdlib.h>"
+            echo "#include <unistd.h>"
+            echo "#undef environ"
+            echo "#define environ gfjq_environ"
+            echo "extern char **environ;"
+        fi
         echo "#ifndef PATH_MAX"
         echo "#include <limits.h>"
         echo "#endif"

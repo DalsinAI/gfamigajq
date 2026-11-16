@@ -65,7 +65,7 @@ SRC="$WORK/jq"
 jq_source "$SRC"
 jq_generate "$SRC" "GFOS: AmigaOS 3.2 m68k-amigaos 68040, regex.library (GFOpenRegex)"
 LINK="m68k-amigaos-gcc -noixemul -m68040 -specs=$HERE/scripts/m68k-soft-m68040.specs -specs=$FA/fpuauto.specs -L$FAL"
-PROBE_CC="$LINK" PROBE_BIGENDIAN=1 jq_probe "$SRC" "$WORK/jq-config.h"
+PROBE_CC="$LINK" PROBE_BIGENDIAN=1 PROBE_GFOS=1 jq_probe "$SRC" "$WORK/jq-config.h"
 echo "probe: $(grep -c '^#define HAVE_' "$WORK/jq-config.h") functions found"
 
 # --- compile -------------------------------------------------------------------
@@ -115,6 +115,8 @@ sh "$HERE/scripts/write-part.sh" "$P" "$JQ_VERSION"
 # jq's own test files, for jq --run-tests in a lab (not in the part)
 rm -rf "$OUT/tests"; mkdir -p "$OUT/tests"
 cp "$SRC"/tests/jq.test "$SRC"/tests/man.test "$SRC"/tests/base64.test "$SRC"/tests/uri.test "$OUT/tests/"
+# jq.test's module tests read these (jq -L modules --run-tests jq.test)
+cp -R "$SRC/tests/modules" "$OUT/tests/modules"
 python3 "$HERE/tests/skip_cases.py" "$SRC/tests/onig.test" "$HERE/tests/onig-skips.txt" > "$OUT/tests/onig-gf.test"
 ls -l "$P/C/jq" "$P/Libs/regex.library"
 echo "part: $(grep -c '^copy\|^add' "$P/Part") files, $(du -sk "$P" | cut -f1) KB"
