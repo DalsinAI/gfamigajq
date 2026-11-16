@@ -45,8 +45,9 @@ jq_generate() {
     printf '#define JQ_CONFIG "%s"\n' "$2" > "$1/src/config_opts.inc"
 }
 
-# jq-config.h into $2: configure's answers, found by linking a call to each
-# function as autoconf does ($PROBE_CC: the compile and link command).
+# jq-config.h into $2: configure's answers, found by linking each function
+# as autoconf does, and only where a header declares it
+# ($PROBE_CC: the compile and link command).
 # $1 is jq's tree (its configure.ac lists the maths functions).
 # PROBE_BIGENDIAN=1: the 68k (jv_dtoa's IEEE_MC68k), else IEEE_8087.
 jq_probe() {
@@ -70,7 +71,14 @@ jq_probe() {
         for f in $(sed -n 's/^AC_CHECK_MATH_FUNC(\([a-z0-9_]*\)).*/\1/p' "$1/configure.ac") \
                  memmem isatty strptime strftime setenv timegm gmtime_r gmtime \
                  localtime_r localtime gettimeofday setlocale realpath; do
-            printf 'char %s(void);\nint main(void) { return (int)%s(); }\n' "$f" "$f" > "$t/p.c"
+            # found by the link AND declared by the C library's headers: a
+            # function in the library but in no header (libnix's scalb and
+            # significand) would be an implicit declaration, so jq's own
+            # fallback is taken instead
+            printf '%s\n' '#define _GNU_SOURCE 1' '#include <math.h>' '#include <stdlib.h>' \
+                '#include <string.h>' '#include <stdio.h>' '#include <time.h>' '#include <unistd.h>' \
+                '#include <locale.h>' '#include <limits.h>' '#include <sys/time.h>' > "$t/p.c"
+            printf 'int main(void) { void (*volatile p)(void) = (void (*)(void))%s; return p != 0; }\n' "$f" >> "$t/p.c"
             # shellcheck disable=SC2086
             if $PROBE_CC -o "$t/p" "$t/p.c" -lm > /dev/null 2>&1; then
                 echo "#define HAVE_$(echo "$f" | tr '[:lower:]' '[:upper:]') 1"
