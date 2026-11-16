@@ -55,6 +55,8 @@ run tests/uri.test
 # onig.test less the cases regex.library can't run (onig-skips.txt)
 python3 "$HERE/tests/skip_cases.py" "$SRC/tests/onig.test" "$HERE/tests/onig-skips.txt" > "$SRC/tests/onig-gf.test"
 run tests/onig-gf.test
+# AmigaDOS dirname/basename/module paths (patches/0003) and capture names
+$CC -Wall -I"$HERE/amiga/include" -I"$HERE/amiga" -o "$WORK/paths_test" "$HERE/tests/paths_test.c" "$HERE/amiga/amiga_paths.c" "$HERE/amiga/rx_names.c" && "$WORK/paths_test" || fail=1
 # patches/0002: jq's exec stack with the 68k's 2-byte alignment (-fpack-struct=2)
 $CC -std=gnu99 -fpack-struct=2 -I"$SRC/src" -o "$WORK/stack_test" "$HERE/tests/stack_test.c" && "$WORK/stack_test" || fail=1
 # amiga/amiga_env.c's list (environ on GFOS: env, $ENV)

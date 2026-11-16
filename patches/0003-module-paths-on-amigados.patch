@@ -1,0 +1,82 @@
+jq's module search on AmigaDOS: a path with a volume ("Work:lib") is
+absolute, and every directory join goes through gfjq_amiga_path
+(amiga/amiga_paths.c, tests/paths_test.c). Other systems: as upstream.
+
+--- a/src/linker.c
++++ b/src/linker.c
+@@ -31,11 +31,30 @@
+                         const char *as, block *out_block,
+                         struct lib_loading_state *lib_state);
+ 
++#ifdef __amigaos__
++/* AmigaDOS module paths: each "dir/rest" join goes through gfjq_amiga_path
++ * (amiga/amiga_paths.c), which knows volumes ("Work:" takes no "/") and
++ * turns "." and ".." into AmigaDOS names */
++#include <libgen.h>
++static jv amiga_join(const char *dir, jv rest) {
++  char out[1024];
++  jv r = gfjq_amiga_path(dir, jv_string_value(rest), out, sizeof out)
++    ? jv_string(out) : jv_string_fmt("%s/%s", dir, jv_string_value(rest));
++  jv_free(rest);
++  return r;
++}
++#define PATH_JOIN(dir, fmt, ...) amiga_join((dir), jv_string_fmt(fmt, __VA_ARGS__))
++#else
++#define PATH_JOIN(dir, fmt, ...) jv_string_fmt("%s/" fmt, (dir), __VA_ARGS__)
++#endif
++
+ static int path_is_relative(jv p) {
+   const char *s = jv_string_value(p);
+ 
+ #ifdef WIN32
+   int res = PathIsRelativeA(s);
++#elif defined(__amigaos__)
++  int res = strchr(s, ':') == NULL;   /* "Work:lib" is absolute */
+ #else
+   int res = *s != '/';
+ #endif
+@@ -67,13 +86,11 @@
+     if (strcmp(".",jv_string_value(path)) == 0) {
+       expanded_elt = jv_copy(path);
+     } else if (strncmp("$ORIGIN/",jv_string_value(path),sizeof("$ORIGIN/") - 1) == 0) {
+-      expanded_elt = jv_string_fmt("%s/%s",
+-                               jv_string_value(jq_origin),
++      expanded_elt = PATH_JOIN(jv_string_value(jq_origin), "%s",
+                                jv_string_value(path) + sizeof ("$ORIGIN/") - 1);
+     } else if (jv_get_kind(lib_origin) == JV_KIND_STRING &&
+                path_is_relative(jv_copy(path))) {
+-      expanded_elt = jv_string_fmt("%s/%s",
+-                               jv_string_value(lib_origin),
++      expanded_elt = PATH_JOIN(jv_string_value(lib_origin), "%s",
+                                jv_string_value(path));
+     } else {
+       expanded_elt = path;
+@@ -176,16 +193,14 @@
+       continue; /* XXX report non-strings in search path?? */
+     }
+     // Try ${search_dir}/${rel_path}.jq
+-    jv testpath = jq_realpath(jv_string_fmt("%s/%s%s",
+-                                            jv_string_value(spath),
++    jv testpath = jq_realpath(PATH_JOIN(jv_string_value(spath), "%s%s",
+                                             jv_string_value(rel_path),
+                                             suffix));
+     ret = stat(jv_string_value(testpath),&st);
+     if (ret == -1 && errno == ENOENT) {
+       jv_free(testpath);
+       // Try ${search_dir}/$(dirname ${rel_path})/jq/main.jq
+-      testpath = jq_realpath(jv_string_fmt("%s/%s/%s%s",
+-                                           jv_string_value(spath),
++      testpath = jq_realpath(PATH_JOIN(jv_string_value(spath), "%s/%s%s",
+                                            jv_string_value(rel_path),
+                                            "jq/main",
+                                            suffix));
+@@ -194,8 +209,7 @@
+     if (ret == -1 && errno == ENOENT) {
+       jv_free(testpath);
+       // Try ${search_dir}/${rel_path}/$(basename ${rel_path}).jq
+-      testpath = jq_realpath(jv_string_fmt("%s/%s/%s%s",
+-                                           jv_string_value(spath),
++      testpath = jq_realpath(PATH_JOIN(jv_string_value(spath), "%s/%s%s",
+                                            jv_string_value(rel_path),
+                                            jv_string_value(bname),
+                                            suffix));
