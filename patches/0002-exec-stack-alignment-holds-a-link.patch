@@ -1,0 +1,18 @@
+From jq's exec_stack.h on the 68k: ALIGNMENT is at least sizeof(int), the size
+of the "next" link stored below each block (tests/stack_test.c).
+
+--- a/src/exec_stack.h	2026-11-16 21:00:54.941819405 +0000
++++ b/src/exec_stack.h	2026-11-16 21:00:54.943290054 +0000
+@@ -39,7 +39,11 @@
+   char x;
+   union { int i; double d; uint64_t u64; size_t sz; void* ptr; } u;
+ };
+-enum {ALIGNMENT = offsetof(struct determine_alignment, u)};
++enum {NATURAL_ALIGNMENT = offsetof(struct determine_alignment, u)};
++/* Each block's "next" stack_ptr lives in the ALIGNMENT bytes below it, so
++ * ALIGNMENT must hold one: on the 68k everything aligns to 2 bytes, and a
++ * 2-byte slot let the link overwrite the block below. */
++enum {ALIGNMENT = NATURAL_ALIGNMENT > sizeof(int) ? NATURAL_ALIGNMENT : sizeof(int)};
+ 
+ static size_t align_round_up(size_t sz) {
+   return ((sz + (ALIGNMENT - 1)) / ALIGNMENT) * ALIGNMENT;
