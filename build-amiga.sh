@@ -75,7 +75,7 @@ if m68k-amigaos-gcc -fno-late-combine-instructions -S -o /dev/null -x c /dev/nul
 CF="-noixemul -m68040 -O2 -fno-tree-loop-distribute-patterns -fno-delete-null-pointer-checks $LATE \
  -Werror=implicit-function-declaration -Werror=int-conversion -Wno-unused-parameter \
  -include $WORK/jq-config.h -I$HERE/amiga/include -I$RXB/include -I$HERE/amiga -I$SRC -I$SRC/src -I$SRC/vendor \
- -DJQ_AMIGA_VERSION=\"$JQ_VERSION\" -DJQ_AMIGA_DATE=\"$(date -u +%d.%m.%Y)\""
+ -DJQ_AMIGA_VERSION=\\\"$JQ_VERSION\\\" -DJQ_AMIGA_DATE=\\\"$(date -u +%d.%m.%Y)\\\""
 O="$WORK/obj"
 # objects made against another jq or patch set go
 [ "$(cat "$O/.src" 2>/dev/null)" = "$(cat "$SRC/.patched")" ] || { rm -rf "$O"; mkdir -p "$O"; cat "$SRC/.patched" > "$O/.src"; }
