@@ -62,10 +62,10 @@ the two regex.library can't pass yet and why).
 - `amiga/include/libgen.h`, `amiga/amiga_paths.c`: `dirname`/`basename`
   that know `Volume:` paths.
 - `amiga/amiga_compat.c`: stack, `$VER`, `realpath()` on AmigaDOS locks
+  (when libnix has none).
 - `amiga/amiga_env.c`: `environ` (libnix has none) for `env` and `$ENV`:
   the Shell's local variables, then the global ones in ENV:, a name set
   both ways given its local value (tests/env_test.c checks the list).
-  (when libnix has none).
 - `scripts/jq-common.sh`: the generated files and a configure-style probe
   (each function linked, as autoconf does) giving `jq-config.h`.
 
