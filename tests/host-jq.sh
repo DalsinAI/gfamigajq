@@ -55,4 +55,6 @@ run tests/uri.test
 # onig.test less the cases regex.library can't run (onig-skips.txt)
 python3 "$HERE/tests/skip_cases.py" "$SRC/tests/onig.test" "$HERE/tests/onig-skips.txt" > "$SRC/tests/onig-gf.test"
 run tests/onig-gf.test
+# amiga/amiga_env.c's list (environ on GFOS: env, $ENV)
+$CC -std=gnu99 -Wall -I"$HERE/amiga" -o "$WORK/env_test" "$HERE/tests/env_test.c" "$HERE/amiga/amiga_env.c" && "$WORK/env_test" || fail=1
 exit $fail

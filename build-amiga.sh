@@ -87,7 +87,7 @@ M="$O/Makefile"
         o="$(echo "$f" | tr / _ | sed 's/\.c$/.o/')"; A="$A $o"
         printf '%s: %s\n\tm68k-amigaos-gcc $(CF) -MMD -c $< -o $@\n' "$o" "$SRC/$f"
     done
-    for f in rx_names pthread_one amiga_paths amiga_compat; do
+    for f in rx_names pthread_one amiga_paths amiga_compat amiga_env; do
         A="$A amiga_$f.o"
         printf 'amiga_%s.o: %s\n\tm68k-amigaos-gcc $(CF) -MMD -c $< -o $@\n' "$f" "$HERE/amiga/$f.c"
     done
